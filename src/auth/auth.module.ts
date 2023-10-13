@@ -9,15 +9,7 @@ import { User, UserSchema } from 'src/schemas/user.schema';
 import { AuthGuard } from './auth.guard';
 
 @Module({
-  providers: [
-    AuthService,
-    JwtStrategy,
-    MongoDbService,
-    {
-      provide: 'APP_GUARD',
-      useClass: AuthGuard,
-    },
-  ],
+  providers: [AuthService, JwtStrategy, MongoDbService, AuthGuard],
   imports: [
     JwtModule.register({}),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),

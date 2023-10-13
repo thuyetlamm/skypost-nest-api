@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthDTO } from './auth.dto';
@@ -7,6 +8,7 @@ import { User } from 'src/schemas/user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { UserDto } from 'src/user/user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -17,35 +19,53 @@ export class AuthService {
   ) {}
 
   async login(user: AuthDTO) {
-    const currentUser: UserDto = await this.userModel.findOne({
-      email: user.username,
-    });
-    if (!currentUser) {
+    try {
+      const { username, password } = user;
+      const currentUser: UserDto = await this.userModel.findOne({
+        email: username,
+      });
+
+      if (!currentUser) {
+        throw new UnauthorizedException('Username or Email is incorrect');
+      }
+
+      const comparePassword = bcrypt.compareSync(
+        password,
+        currentUser.password
+      );
+
+      if (!comparePassword) {
+        throw new UnauthorizedException('Password is incorrect');
+      }
+
+      const accessToken: string = await this.generatorAccessToken(currentUser);
+      const refreshToken: string =
+        await this.generatorRefreshToken(currentUser);
       return {
-        message: 'User not found',
-        error: true,
-        errorCode: 400,
+        error: false,
+        message: 'Login Successfully',
+        accessToken,
+        refreshToken,
       };
+    } catch (error) {
+      throw new UnauthorizedException(error.message);
     }
-    const accessToken: string = await this.generatorAccessToken(currentUser);
-    const refreshToken: string = await this.generatorRefreshToken(currentUser);
-    return {
-      error: false,
-      message: 'Login Successfully',
-      accessToken,
-      refreshToken,
-    };
   }
 
   async getProfile(user: UserDto) {
     try {
+      if (!user) {
+        throw new UnauthorizedException('get profile failed');
+      }
+
       const currentUser: UserDto = await this.userModel.findOne({
         _id: user._id,
       });
+
       const newUser = UserDto.plainToClassInstance(currentUser);
       return newUser;
     } catch (error) {
-      throw new Error(error.message);
+      throw new UnauthorizedException(error.message);
     }
   }
 
@@ -67,5 +87,18 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_SECRET_KEY2'),
       }
     );
+  }
+
+  async refreshTokenService(token: string) {
+    try {
+      const user = await this.jwtService.verifyAsync(token, {
+        secret: this.configService.get<string>('JWT_SECRET_KEY2'),
+      });
+
+      const newAccessToken = await this.generatorAccessToken(user);
+      return newAccessToken;
+    } catch (err) {
+      throw new UnauthorizedException(err.message);
+    }
   }
 }
