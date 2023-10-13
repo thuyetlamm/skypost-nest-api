@@ -9,7 +9,7 @@ export class UserDto extends BaseDto {
   username: string;
 
   @IsNotEmpty({ message: 'Email is required' })
-  @IsEmail()
+  @IsEmail({}, { message: 'Please enter a valid email address' })
   @Expose()
   email: string;
 
