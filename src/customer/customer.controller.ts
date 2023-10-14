@@ -42,9 +42,17 @@ export class CustomerController {
   ///----------------------------------------------------------------
   @Delete('customer/delete/:id')
   async delete(@Res() response: Response, @Param('id') id: ObjectId) {
-    await this.customerService.delete(id);
+    const res = await this.customerService.delete(id);
+    if (!res) {
+      return response.status(HttpStatus.NOT_FOUND).json({
+        status: 404,
+        error: true,
+        message: 'Customer dont exist',
+      });
+    }
     return response.status(HttpStatus.OK).json({
       status: 200,
+      error: false,
       message: 'Customer deleted successfully',
     });
   }

@@ -29,7 +29,10 @@ export class CustomerService extends BaseService<Customer, CustomerDto> {
   ///----------------------------------------------------------------
   async delete(id: ObjectId) {
     try {
-      return await this.deleteOne({ _id: id });
+      this.validateObjectId(id);
+
+      const deletedCustomer = await this.deleteOne({ _id: id });
+      return deletedCustomer;
     } catch (error) {
       throw new Error(error.message);
     }

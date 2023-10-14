@@ -4,6 +4,9 @@ import { Expose } from 'class-transformer';
 import { ObjectId } from 'mongoose';
 
 export class UserDto extends BaseDto {
+  @Expose()
+  _id: ObjectId;
+
   @IsNotEmpty({ message: 'Username is required' })
   @Expose()
   username: string;

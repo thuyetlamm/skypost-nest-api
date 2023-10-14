@@ -1,5 +1,12 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { FilterQuery, Model, ObjectId, QueryOptions } from 'mongoose';
+import {
+  FilterQuery,
+  Model,
+  ObjectId,
+  QueryOptions,
+  isValidObjectId,
+} from 'mongoose';
+import { BaseDto } from './base.dto';
 
 @Injectable()
 export abstract class BaseService<T, TDto> {
@@ -22,7 +29,8 @@ export abstract class BaseService<T, TDto> {
 
   async deleteOne(filter?: FilterQuery<T>, options?: QueryOptions<T>) {
     try {
-      return await this.model.deleteOne(filter, options);
+      const data = await this.model.deleteOne(filter, options);
+      return data.deletedCount;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -36,8 +44,10 @@ export abstract class BaseService<T, TDto> {
     }
   }
 
-  async update(payload: TDto | any) {
+  async update(payload: TDto & BaseDto) {
     try {
+      this.validateObjectId(payload._id);
+
       const updatedPayload = await this.model.findOneAndUpdate(
         { _id: payload._id },
         { $set: payload }
@@ -64,11 +74,40 @@ export abstract class BaseService<T, TDto> {
     }
   }
 
-  async getAll(query?: FilterQuery<T>) {
+  async findById(id: ObjectId) {
     try {
-      return await this.model.find({ ...query });
+      this.validateObjectId(id);
+      return await this.model.findOne({ _id: id });
     } catch (error) {
       throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async getAll(query?: FilterQuery<T>, limit: number = 20, page: number = 1) {
+    try {
+      const data = await this.model
+        .find(query)
+        .limit(+limit)
+        .skip(+limit * (+page - 1));
+      return {
+        data,
+        meta: {
+          pagination: {
+            limit,
+            page,
+            totalPages: Math.ceil(data.length / +limit),
+            total: data.length,
+          },
+        },
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+  validateObjectId(id: ObjectId) {
+    const isValid = isValidObjectId(id);
+    if (!isValid) {
+      throw new Error('Invalid data');
     }
   }
 }
