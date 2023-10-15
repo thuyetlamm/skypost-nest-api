@@ -31,7 +31,7 @@ export class CustomerService extends BaseService<Customer, CustomerDto> {
     try {
       this.validateObjectId(id);
 
-      const deletedCustomer = await this.deleteOne({ _id: id });
+      const deletedCustomer = await this.baseDeleteOne({ _id: id });
       return deletedCustomer;
     } catch (error) {
       throw new Error(error.message);

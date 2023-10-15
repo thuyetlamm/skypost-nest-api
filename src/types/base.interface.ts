@@ -4,3 +4,10 @@ export type BaseQuery = {
   keyword: string;
   status: number;
 };
+
+export type OptionsResponse<T> = {
+  error?: boolean;
+  message?: string;
+  data?: T | null;
+  status?: number;
+};

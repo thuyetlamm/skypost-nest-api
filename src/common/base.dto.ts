@@ -1,10 +1,10 @@
-import { Expose, plainToClass } from 'class-transformer';
-import { IsMongoId, IsOptional } from 'class-validator';
+import { Expose, Transform, plainToClass } from 'class-transformer';
+import { IsOptional } from 'class-validator';
 import { ObjectId } from 'mongoose';
 
 export abstract class BaseDto {
-  @IsMongoId()
   @IsOptional()
+  @Transform(({ obj }) => String(obj._id)) // handle transform new ObjectId when return
   @Expose()
   _id: ObjectId;
 

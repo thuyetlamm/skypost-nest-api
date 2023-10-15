@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { UserDto } from './user.dto';
+import { UserDto } from './dto/user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schemas/user.schema';
 import { Model, ObjectId } from 'mongoose';
@@ -24,12 +24,6 @@ export class UserService extends BaseService<User, UserDto> {
     return UserDto.plainToClassInstance(newUser as any);
   }
 
-  async deleteUser(id: ObjectId) {
-    this.validateObjectId(id);
-
-    return this.deleteOne(id);
-  }
-
   async findUser(email: string): Promise<UserDto> {
     const newUser = await this.findOne({ email });
     return newUser as any;
@@ -47,7 +41,7 @@ export class UserService extends BaseService<User, UserDto> {
     try {
       this.validateObjectId(id);
 
-      const deletedUser = await this.deleteOne({ _id: id });
+      const deletedUser = await this.baseDeleteOne({ _id: id });
       return deletedUser;
     } catch (error) {
       throw new Error(error.message);

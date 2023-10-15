@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  HttpStatus,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   FilterQuery,
   Model,
@@ -7,14 +12,17 @@ import {
   isValidObjectId,
 } from 'mongoose';
 import { BaseDto } from './base.dto';
+import { Response } from 'express';
+import { OptionsResponse } from 'src/types/base.interface';
 
 @Injectable()
 export abstract class BaseService<T, TDto> {
   constructor(private readonly model: Model<T>) {}
 
-  async createNew(data: T) {
+  async createNew(data: T | TDto) {
     try {
-      return await this.model.create(data);
+      const res = await this.model.create(data);
+      return res;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
@@ -27,7 +35,7 @@ export abstract class BaseService<T, TDto> {
     }
   }
 
-  async deleteOne(filter?: FilterQuery<T>, options?: QueryOptions<T>) {
+  async baseDeleteOne(filter?: any, options?: QueryOptions<T>) {
     try {
       const data = await this.model.deleteOne(filter, options);
       return data.deletedCount;
@@ -36,7 +44,7 @@ export abstract class BaseService<T, TDto> {
     }
   }
 
-  async deleteMany(ids: ObjectId[]) {
+  async baseDeleteMany(ids: ObjectId[]) {
     try {
       return await this.model.deleteMany({ _id: { $in: ids } });
     } catch (error) {
@@ -107,7 +115,35 @@ export abstract class BaseService<T, TDto> {
   validateObjectId(id: ObjectId) {
     const isValid = isValidObjectId(id);
     if (!isValid) {
-      throw new Error('Invalid data');
+      throw new NotFoundException('Invalid data');
+    }
+  }
+
+  handleReposonse(
+    response: Response,
+    type: 'success' | 'error',
+    option?: OptionsResponse<TDto>
+  ) {
+    switch (type) {
+      case 'success':
+        const payload: OptionsResponse<TDto> = {
+          status: HttpStatus.OK,
+          error: false,
+          message: 'Successfully',
+          ...option,
+        };
+        return response.status(payload.status).json(payload);
+      case 'error':
+        const payloadError: OptionsResponse<TDto> = {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: true,
+          message: 'Error',
+          ...option,
+        };
+        return response.status(payloadError.status).json(payloadError);
+
+      default:
+        break;
     }
   }
 }

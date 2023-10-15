@@ -8,7 +8,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { JwtResponse } from 'src/user/user.dto';
+import { JwtResponse } from 'src/user/dto/user.dto';
 import { AuthDTO } from './auth.dto';
 import { AuthGuard, Public } from './auth.guard';
 import { AuthService } from './auth.service';

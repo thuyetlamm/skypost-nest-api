@@ -14,6 +14,7 @@ import { Customer, CustomerSchema } from 'src/schemas/customer.schema';
     MongooseModule.forFeature([
       { name: Customer.name, schema: CustomerSchema },
     ]),
+    CustomerService,
   ],
   providers: [CustomerService],
   controllers: [CustomerController],

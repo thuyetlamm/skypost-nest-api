@@ -3,16 +3,43 @@ import * as moment from 'moment';
 
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { Bol } from 'src/schemas/bol.schema';
 import { CATEGORY_LIST, Category } from 'src/types/bol.interface';
 import { BaseService } from 'src/common/base.service';
-import { BolDto } from './bol.dto';
+import { BolDto } from './dto/bol.dto';
+import { CustomerService } from 'src/customer/customer.service';
 
 @Injectable()
 export class BolService extends BaseService<Bol, BolDto> {
-  constructor(@InjectModel(Bol.name) private bolModel: Model<Bol>) {
+  constructor(
+    @InjectModel(Bol.name) private bolModel: Model<Bol>,
+    private customerService: CustomerService
+  ) {
     super(bolModel);
+  }
+
+  async store(payload: BolDto): Promise<BolDto> {
+    try {
+      const startDate = moment(payload.startDate).format(
+        'YYYY-MM-DD HH:mm'
+      ) as unknown as Date;
+      const currentCustomer = await this.customerService.findById(
+        payload.customerId
+      );
+
+      const convertPayload = {
+        ...payload,
+        customerCode: currentCustomer.code,
+        customerName: currentCustomer.name,
+        startDate,
+      };
+      const bol = await this.createNew(convertPayload);
+      const dataReturn = await BolDto.plainToClassInstance(bol as any);
+      return dataReturn;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 
   async upload(file: Buffer) {
@@ -65,6 +92,19 @@ export class BolService extends BaseService<Bol, BolDto> {
           });
         }
       }
+    } catch (error) {
+      throw new Error(error.message);
+    }
+  }
+
+  async deleteBol(id: ObjectId | ObjectId[]) {
+    try {
+      this.validateObjectId(id as ObjectId);
+
+      if (typeof id === 'string') {
+        return await this.baseDeleteOne({ _id: id });
+      }
+      return await this.baseDeleteMany(id as ObjectId[]);
     } catch (error) {
       throw new Error(error.message);
     }
