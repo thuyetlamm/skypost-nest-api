@@ -25,11 +25,24 @@ export class UserController {
   constructor(@Inject('APP_USER_SERVICE') private userService: UserService) {}
 
   @Get('users')
-  getAllUser(
+  async getAllUser(
     @Query()
-    query: UserQuery & BaseQuery
+    query: UserQuery & BaseQuery,
+    @Res() response: Response
   ) {
-    return this.userService.getAllUser(query);
+    const [error, data] = await this.userService.getAllUser(query);
+
+    if (error) {
+      return this.userService.handleReposonse(response, 'error', {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: 'Get User Fail',
+      });
+    }
+    return this.userService.handleReposonse(response, 'success', {
+      status: HttpStatus.OK,
+      message: 'Get User Successfully',
+      ...data,
+    });
   }
   // [POST] /user
   @Post('user/create')

@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { UserDto } from './dto/user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schemas/user.schema';
-import { Model, ObjectId } from 'mongoose';
+import { Model, ObjectId, QueryOptions } from 'mongoose';
 import { BaseService } from 'src/common/base.service';
 import * as bcrypt from 'bcrypt';
 import { UserQuery } from 'src/types/user.interface';
 import { BaseQuery } from 'src/types/base.interface';
+import { handleRequest } from 'src/common/handleRequest';
 
 @Injectable()
 export class UserService extends BaseService<User, UserDto> {
@@ -55,7 +56,13 @@ export class UserService extends BaseService<User, UserDto> {
         { username: { $regex: keyword, $options: 'i' } },
         { email: { $regex: keyword, $options: 'i' } },
       ],
-    };
-    return this.getAll(realQuery, limit, page);
+    } as QueryOptions;
+    if (+status !== -1) {
+      realQuery.status = status;
+    }
+    const [error, data] = await handleRequest(
+      this.getAll(realQuery, limit, page)
+    );
+    return [error, data];
   }
 }
