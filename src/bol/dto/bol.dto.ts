@@ -50,8 +50,8 @@ export class BolDto extends BaseDto {
   @IsNotEmpty({ message: 'Address is required' })
   address: string;
 
-  // @IsArray({ message: 'Category is Malformed' })
-  // @ArrayNotEmpty({ message: 'Categories is required' })
+  @IsArray({ message: 'Category is Malformed' })
+  @ArrayNotEmpty({ message: 'Categories is required' })
   @Expose()
   category: Array<Category>;
 
