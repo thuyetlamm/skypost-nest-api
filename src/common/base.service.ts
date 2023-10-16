@@ -54,7 +54,7 @@ export abstract class BaseService<T, TDto> {
 
   async update(payload: TDto & BaseDto) {
     try {
-      this.validateObjectId(payload._id);
+      this.validateObjectId(payload?._id);
 
       const updatedPayload = await this.model.findOneAndUpdate(
         { _id: payload._id },
@@ -96,13 +96,15 @@ export abstract class BaseService<T, TDto> {
       const data = await this.model
         .find(query)
         .limit(+limit)
-        .skip(+limit * (+page - 1));
+        .skip(+limit * (+page - 1))
+        .sort([['updatedAt', -1]]);
+
       return {
         data,
         meta: {
           pagination: {
-            limit,
-            page,
+            limit: +limit,
+            page: +page,
             totalPages: Math.ceil(data.length / +limit),
             total: data.length,
           },

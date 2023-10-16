@@ -1,25 +1,17 @@
-import {
-  ArrayNotEmpty,
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  Matches,
-} from 'class-validator';
+import { IsInt, IsNotEmpty, Matches, ValidateIf } from 'class-validator';
 import { BaseDto } from 'src/common/base.dto';
 import { Expose, Transform } from 'class-transformer';
 import { ObjectId } from 'mongoose';
 import { REGEX_CODE_BOL } from 'src/regex/bol';
-import { Optional } from '@nestjs/common';
 import { Category } from 'src/types/bol.interface';
 
-export class BolDto extends BaseDto {
+export class UpdateDto extends BaseDto {
   @IsNotEmpty({ message: 'Code is required' })
   @Transform(({ value }) => value?.toUpperCase())
   @Matches(REGEX_CODE_BOL, { message: 'Code not true format' })
   @Expose()
   code: string;
 
-  @IsNotEmpty({ message: 'From is required' })
   @Expose()
   from: string;
 
@@ -29,17 +21,12 @@ export class BolDto extends BaseDto {
   @Expose()
   status: number;
 
-  @IsNotEmpty({ message: 'Quantity is required' })
-  @Transform(({ value }) => Number(value))
-  @IsInt()
   @Expose()
   quantity: number;
 
-  @IsNotEmpty({ message: 'Status is required' })
   @Expose()
   customerId: ObjectId;
 
-  @IsNotEmpty({ message: 'Date is required' })
   @Expose()
   startDate: Date;
 
@@ -47,11 +34,8 @@ export class BolDto extends BaseDto {
   endDate: Date | null;
 
   @Expose()
-  @IsNotEmpty({ message: 'Address is required' })
   address: string;
 
-  // @IsArray({ message: 'Category is Malformed' })
-  // @ArrayNotEmpty({ message: 'Categories is required' })
   @Expose()
   category: Array<Category>;
 
@@ -74,12 +58,15 @@ export class BolDto extends BaseDto {
   @Expose()
   description: string;
 
+  @ValidateIf((o) => o.userName.length === 0)
+  @IsNotEmpty({ message: 'Reason is required' })
   @Expose()
   reason: Array<any>;
   @Expose()
   path: string;
 
-  @Optional()
+  @ValidateIf((o) => o.reason.length === 0)
+  @IsNotEmpty({ message: 'Username is required' })
   @Expose()
   userName: string;
 }

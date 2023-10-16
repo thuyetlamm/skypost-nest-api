@@ -92,3 +92,8 @@ export type Category = {
   code: string[];
   name: string;
 };
+export type BolQuery = {
+  from: Date;
+  to: Date;
+  customerCode: string;
+};
